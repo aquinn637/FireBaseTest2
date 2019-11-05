@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, NgZone } from "@angular/core";
 
 const firebase = require("nativescript-plugin-firebase");
 
@@ -10,11 +10,14 @@ import { AppService } from "./app.service";
 })
 export class AppComponent implements OnInit {
 
-  constructor(private appService: AppService) {
+  constructor(private appService: AppService, private ngZone: NgZone) {
 
   }
 
     ngOnInit() {
+
+      this.appService.setFCMToken('hello world');
+
       firebase.init({
 
         showNotifications: true,
@@ -28,7 +31,10 @@ export class AppComponent implements OnInit {
           console.log('[Firebase] onPushTokenReceivedCallback:', { token });
 
           //TODO: set the token here
-          this.appService.setFCMToken(token); // = token;
+          this.ngZone.run(() => this.appService.setFCMToken(token));; // = token;
+
+          //TODO: set the token here
+          //this.appService.setFCMToken(token); // = token;
 
         },
   
