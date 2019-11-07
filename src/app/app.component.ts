@@ -1,5 +1,5 @@
 import { Component, OnInit, NgZone } from "@angular/core";
-
+import { LocalNotifications } from "nativescript-local-notifications";
 const firebase = require("nativescript-plugin-firebase");
 
 import { AppService } from "./app.service";
@@ -10,44 +10,39 @@ import { AppService } from "./app.service";
 })
 export class AppComponent implements OnInit {
 
-  constructor(private appService: AppService, private ngZone: NgZone) {
+	constructor(private appService: AppService, private ngZone: NgZone) {}
 
-  }
+	public ngOnInit(): void {
 
-    ngOnInit() {
+		this.appService.setFCMToken('hello world');
 
-      this.appService.setFCMToken('hello world');
+		firebase
+			.init({
 
-      firebase.init({
+				showNotifications: true,
+				showNotificationsWhenInForeground: true,
 
-        showNotifications: true,
-        showNotificationsWhenInForeground: true,
+				onPushTokenReceivedCallback: (token) => {
+					console.log('[Firebase] onPushTokenReceivedCallback:', { token });
+					this.ngZone.run(() => this.appService.setFCMToken(token));
+				},
 
-        // Optionally pass in properties for database, authentication and cloud messaging,
-        // see their respective docs.
-        
-        onPushTokenReceivedCallback: (token) => {
+				onMessageReceivedCallback: (message) => {
+					console.log('[Firebase] onMessageReceivedCallback:', { message });
 
-          console.log('[Firebase] onPushTokenReceivedCallback:', { token });
+					LocalNotifications.schedule([{
+						title: message.title,
+						body: message.body
+			  		}]);
 
-          //TODO: set the token here
-          this.ngZone.run(() => this.appService.setFCMToken(token));; // = token;
+				}
 
-          //TODO: set the token here
-          //this.appService.setFCMToken(token); // = token;
+			})
+			.then(
+				() => { console.log("firebase.init done"); },
+				error => { console.log(`firebase.init error: ${error}`); }
+			);
 
-        },
-  
-        onMessageReceivedCallback: (message) => {
-          console.log('[Firebase] onMessageReceivedCallback:', { message });
-        }
-
-      }).then(
-        () => { console.log("firebase.init done"); },
-        error => {
-          console.log(`firebase.init error: ${error}`);
-        }
-      );
-    }
+	}
 
 }
